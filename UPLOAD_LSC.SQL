@@ -10,7 +10,7 @@ from files_vxt;
    
    for filelist in LSCFILES
    LOOP
-   		UPDATE_LSC_FILE('LSC_IN',FILELIST.FILE_NAME);
+   		READ_LSC_FILE('LSC_IN',FILELIST.FILE_NAME);
    		DBMS_OUTPUT.PUT_LINE ( filelist.file_name);
    		
    		
