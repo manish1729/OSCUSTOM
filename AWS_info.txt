@@ -1,0 +1,69 @@
+Public DNS : ec2-52-40-198-43.us-west-2.compute.amazonaws.com
+
+ec2-52-37-222-33.us-west-2.compute.amazonaws.com
+
+public ip : 52.26.219.8
+
+instance id : 52.26.219.8
+
+for putty :
+host is : ec2-user@ec2-52-40-198-43.us-west-2.compute.amazonaws.com
+
+
+
+https://survivalguides.wordpress.com/2012/07/30/installing-oracle-11g-xe-and-apex-4-11-in-amazon-aws/
+
+https://survivalguides.wordpress.com/2012/07/30/installing-oracle-11g-xe-and-apex-4-11-in-amazon-aws/
+
+
+vi /etc/sysconfig/network
+hostname = DNS present in this file
+
+ /sbin/ifconfig eth0 | grep 'inet addr' | awk '{print $2}' |sed -e 's/.*://'
+`
+
+@@apexins apex apex temp /i/
+
+@apxrtins.sql apex apex temp /i/
+
+to restart oracle xe servie :
+
+service oracle-xe restart
+
+lsnrctl start
+
+lsnrctl service
+
+
+https://jacekrak.wordpress.com/2014/04/08/installing-apex-with-apex-listener-rest-or-orace-http-server-11g/
+
+https://docs.oracle.com/cd/E37099_01/doc.20/e25066/install.htm#AELIG7219
+
+http://www.oracle.com/technetwork/developer-tools/rest-data-services/downloads/default-3014944.html
+
+/u01/app/oracle/rest/ords/default.xmls
+http://ec2-52-49-26-9.eu-west-1.compute.amazonaws.com:8080/apex/apex_admin
+
+http://ec2-52-49-26-9.eu-west-1.compute.amazonaws.com:4848
+
+SELECT ACL  FROM DBA_NETWORK_ACLS  WHERE HOST = '*' AND LOWER_PORT IS NULL AND UPPER_PORT IS NULL;
+
+DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE('/sys/acls/power_users.xml','APEX_050000', TRUE, 'connect');
+
+SELECT ACL  FROM DBA_NETWORK_ACLS  WHERE HOST = 'localhost' AND LOWER_PORT IS NULL AND UPPER_PORT IS NULL;
+
+
+DBMS_NETWORK_ACL_ADMIN.CREATE_ACL('local-access-users.xml','ACL that lets users to connect to localhost','APEX_050000', TRUE, 'connect');
+
+---- wth tomcat
+
+http://ora-00001.blogspot.ie/2015/06/installing-oracle-xe-ords-and-apex-on-centos-linux-part-two.html
+
+
+http://sanjeev-oracle-world.blogspot.ie/2015/08/installing-apex5-with-ords3-on-apache.html
+
+http://www.opal-consulting.de/downloads/presentations/2015-06-ODTUG-KScope-ORDS-in-production/daust.settingUpOrds.pdf
+
+lsnrctl status
+
+service oracle-xe start

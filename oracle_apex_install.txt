@@ -1,0 +1,234 @@
+--- get all the required downloads
+a) oracle-xe-11.2.0-1.0.x86_64.rpm.zip ( oracle 11XE)
+b) apex_5.0.3_en.zip ( apex)
+c) ords.3.0.5.124.10.54.zip ( ORDS REST service)
+
+---
+
+
+mkdir -p /opt/software/oracle
+
+cd /opt
+
+chmod -R 777 *
+
+cd /opt/software/oracle
+
+unzip oracle-xe-11.2.0-1.0.x86_64.rpm.zip 
+
+--- create swap file for installation
+swapoff /swapfile
+
+ rm /swapfile
+
+dd if=/dev/zero of=/swapfile bs=1536 count=1572864 
+/sbin/mkswap /swapfile
+/sbin/swapon /swapfile
+/sbin/swapon -s
+
+rpm -Uvh oracle-xe-11.2.0-1.0.x86_64.rpm
+
+/etc/init.d/oracle-xe configure
+
+vi /etc/profile
+
+export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+export ORACLE_SID=XE
+export NLS_LANG=AMERICAN.AL32UTF8
+
+export PATH=$PATH:$ORACLE_HOME/bin
+
+. /etc/profile
+
+echo $ORACLE_HOME
+
+sqlplus sys@localhost as sysdba
+
+
+select sysdate from dual;
+
+
+vi /etc/sysconfig/network
+
+Find the following entry HOSTNAME=localhost.localhost.com
+
+Change this to your FQDN as per what is registered in your DNS.
+
+reboot
+
+
+APex installation :
+
+sqlplus sys/Password123@localhost as sysdba
+
+ALTER SYSTEM SET SHARED_POOL_SIZE='100M' SCOPE=spfile;
+
+exit
+
+service oracle-xe restart
+
+cd /opt/software/oracle/
+
+cd /u01/app/oracle
+
+ cp /opt/software/oracle/apex_5.0.3_en.zip .
+
+unzip apex*
+
+cd /u01/app/oracle/apex
+
+sqlplus sys/Password123@localhost as sysdba
+
+SQL> prompt
+
+create tablespace apex
+  logging
+  datafile '/u01/app/oracle/oradata/XE/apex.dbf' 
+  size 32m 
+  autoextend on 
+  next 32m maxsize 2048m
+  extent management local;
+
+@@apexins apex apex temp /i/
+
+@apxchpwd
+
+ALTER USER APEX_PUBLIC_USER ACCOUNT UNLOCK
+
+ALTER USER APEX_PUBLIC_USER IDENTIFIED BY Password123;
+
+ALTER USER APEX_050000 ACCOUNT UNLOCK
+
+ALTER USER APEX_050000 IDENTIFIED BY Password123;
+
+exit
+
+
+----- REST Service setup
+
+EXEC DBMS_XDB.SETHTTPPORT(0);
+
+@apex_rest_config.sql 
+
+
+
+
+
+DECLARE
+ACL_PATH  VARCHAR2(4000);
+BEGIN
+-- Look for the ACL currently assigned to '*' and give APEX_050000
+-- the "connect" privilege if APEX_050000 does not have the privilege yet.
+
+  SELECT ACL INTO ACL_PATH FROM DBA_NETWORK_ACLS
+   WHERE HOST = '*' AND LOWER_PORT IS NULL AND UPPER_PORT IS NULL;
+
+IF DBMS_NETWORK_ACL_ADMIN.CHECK_PRIVILEGE(ACL_PATH,     'APEX_050000',
+    'connect') IS NULL THEN
+    DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE(ACL_PATH,
+    'APEX_050000', TRUE, 'connect');
+END IF;
+
+EXCEPTION
+-- When no ACL has been assigned to '*'.
+WHEN NO_DATA_FOUND THEN
+DBMS_NETWORK_ACL_ADMIN.CREATE_ACL('power_users.xml',
+            'ACL that lets power users to connect to everywhere',
+    'APEX_050000', TRUE, 'connect');
+    DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL('power_users.xml','*');
+END;
+/
+COMMIT; 
+-----------------------------
+
+DECLARE
+ACL_PATH VARCHAR2(4000);
+BEGIN
+SELECT ACL INTO ACL_PATH FROM DBA_NETWORK_ACLS
+WHERE HOST = 'localhost' AND LOWER_PORT IS NULL AND UPPER_PORT IS NULL;
+IF DBMS_NETWORK_ACL_ADMIN.CHECK_PRIVILEGE(ACL_PATH, 'APEX_050000','connect') IS NULL THEN
+DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE(ACL_PATH,'APEX_050000', TRUE, 'connect');
+END IF;
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+DBMS_NETWORK_ACL_ADMIN.CREATE_ACL('local-access-users.xml','ACL that lets users to connect to localhost','APEX_050000', TRUE, 'connect');
+DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL('local-access-users.xml','localhost');
+END;
+/
+COMMIT;
+
+-----------
+
+
+
+
+
+
+
+
+
+deploy latest Java code :
+
+sudo yum update
+
+sudo yum install java-1.8.0
+
+
+
+unzip and configure listener:
+
+mkdir /u01/app/oracle/rest
+unzip ords.2.0.6.42.09.36.zip
+java -jar ords.war
+
+Enter the location to store configuration data:
+/u01/app/oracle/rest
+Enter the name of the database server [localhost]:
+Enter 1 to specify the database service name, or 2 to specify the database SID [1]: 1
+Enter the database service name:orcl.universe.com
+Enter 1 if you wish to start in standalone mode or 2 to exit [1]:
+Enter the APEX static resources location or Enter to skip:
+/u01/app/oracle/apex/images/
+
+Rest of values are default.
+
+
+failed logon 
+
+Log into console
+
+http://YOUR_IP:8080/ords/apex_admin
+
+
+lsnrctl status
+
+lsnrctl start
+
+UNLOCK APEX_050000 user
+
+
+modify default.xml use dns entry
+
+db.connectionType		tns
+db.tnsAliasName			XE
+db.tnsDirectory			/u01/app/oracle/product/11.2.0/xe/network/admin
+
+
+
+--------------------important to create swap area because of memory issue in nano machine :
+
+https://www.digitalocean.com/community/tutorials/how-to-add-swap-on-ubuntu-14-04
+
+sudo fallocate -l 4G /swapfile
+ls -lh /swapfile
+sudo chmod 600 /swapfile
+ls -lh /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo swapon -s
+
+
+to make swap permanent
+sudo nano /etc/fstab
+add line
+/swapfile   none    swap    sw    0   0
